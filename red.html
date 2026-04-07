@@ -1,0 +1,63 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Compressao de PDF - 60MB</title>
+    <link rel="stylesheet" href="./stylesred.css" />
+  </head>
+  <body>
+    <main class="wrap">
+      <section class="card">
+        <h1>Compressor de PDF</h1>
+        <p class="subtitle">
+          Puro HTML, CSS e JS. Se enviar 1 PDF, baixa 1 PDF. Se enviar varios, baixa 1 ZIP.
+        </p>
+
+        <form id="compress-form">
+          <label for="pdf-input">Arquivos PDF</label>
+          <input
+            id="pdf-input"
+            type="file"
+            accept=".pdf,application/pdf"
+            multiple
+            required
+          />
+
+          <label for="max-mb">Limite maximo por arquivo (MB, ate 15)</label>
+          <input id="max-mb" type="number" min="1" max="15" step="1" value="15" />
+
+          <label for="quality-profile">Perfil de qualidade</label>
+          <select id="quality-profile">
+            <option value="quality" selected>Melhor qualidade</option>
+            <option value="balanced">Balanceado</option>
+            <option value="compact">Maior compressao</option>
+          </select>
+
+          <button id="run-btn" type="submit">Comprimir agora</button>
+        </form>
+
+        <p id="status" class="status"></p>
+        <p id="substatus" class="substatus"></p>
+
+        <table id="report" class="report hidden">
+          <thead>
+            <tr>
+              <th>Arquivo</th>
+              <th>Original (MB)</th>
+              <th>Final (MB)</th>
+              <th>Limite atingido?</th>
+              <th>Metodo</th>
+            </tr>
+          </thead>
+          <tbody id="report-body"></tbody>
+        </table>
+      </section>
+    </main>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+    <script src="./red.js"></script>
+  </body>
+</html>
