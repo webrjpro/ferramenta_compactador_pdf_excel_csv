@@ -95,20 +95,20 @@ class CsvFileProcessor {
         'nome_completo': { input: ['nome completo', 'nome_completo', 'nome', 'discente', 'aluno'], firstname: 'firstname', lastname: 'lastname' },
         'turma': { input: ['turma', 'classe', 'curso'], output: 'cohort1' },
         'email': { input: ['email', 'e-mail', 'correio eletronico'], output: 'email' },
-        'cpf': { input: ['cpf', 'documento_cpf'], output: 'profile_field_cpf' },
-        'sexo': { input: ['sexo', 'genero'], output: 'profile_field_origens_14' },
-        'nomepai': { input: ['nome do pai', 'nome pai', 'filiacao 1', 'filiacao1'], output: 'profile_field_nomepai' },
-        'nomemae': { input: ['nome da mae', 'nome mae', 'filiacao 2', 'filiacao2', 'nome da ma'], output: 'profile_field_nomemae' },
-        'dtnasc': { input: ['data de nascimento', 'dtnasc', 'data nascimento', 'nascimento'], output: 'profile_field_dtnasc' },
-        'celular': { input: ['celular', 'telefone', 'whatsapp', 'contato'], output: 'profile_field_celular' },
-        'docidentif': { input: ['documento de identificacao', 'rg', 'documento', 'identidade'], output: 'profile_field_docidentif' },
-        'orgexpident': { input: ['orgao expedidor', 'org exp', 'orgao'], output: 'profile_field_orgexpident' },
-        'dataexpedicao': { input: ['data de expedicao', 'data expedicao', 'emissao'], output: 'profile_field_dataexpedicao' },
-        'endereco': { input: ['endereco', 'rua', 'logradouro', 'morada'], output: 'profile_field_endereco' },
-        'bairro': { input: ['bairro', 'distrito'], output: 'profile_field_bairro' },
-        'cidade': { input: ['cidade', 'municipio'], output: 'profile_field_cidade' },
-        'uf': { input: ['uf', 'estado', 'provincia'], output: 'profile_field_uf' },
-        'cep': { input: ['cep', 'codigo postal'], output: 'profile_field_cep' },
+        'cpf': { input: ['cpf', 'documento_cpf'], output: 'profile_field_CPF' },
+        'sexo': { input: ['sexo', 'genero'], output: 'profile_field_genero' },
+        'nomepai': { input: ['nome do pai', 'nome pai', 'filiacao 1', 'filiacao1'], output: 'profile_field_Pai' },
+        'nomemae': { input: ['nome da mae', 'nome mae', 'filiacao 2', 'filiacao2', 'nome da ma'], output: 'profile_field_Mae' },
+        'dtnasc': { input: ['data de nascimento', 'dtnasc', 'data nascimento', 'nascimento'], output: 'profile_field_Data' },
+        'celular': { input: ['celular', 'telefone', 'whatsapp', 'contato'], output: 'profile_field_Telefone' },
+        'docidentif': { input: ['documento de identificacao', 'doc de identificacao', 'rg', 'documento', 'identidade'], output: 'profile_field_RegistroCivil' },
+        'orgexpident': { input: ['orgao expedidor', 'org expedidor', 'org exp', 'orgao'], output: 'profile_field_OrgaoEmissor' },
+        'dataexpedicao': { input: ['data de expedicao', 'data expedicao', 'emissao'], output: 'profile_field_DataExpedicao' },
+        'endereco': { input: ['endereco', 'rua', 'logradouro', 'morada'], output: 'profile_field_EnderecoResidencial' },
+        'bairro': { input: ['bairro', 'distrito'], output: 'profile_field_Bairro' },
+        'cidade': { input: ['cidade', 'municipio'], output: 'city' },
+        'uf': { input: ['uf', 'estado', 'provincia'], output: 'profile_field_Estado' },
+        'cep': { input: ['cep', 'codigo postal'], output: 'profile_field_CEP' },
         'matricula_esap': { input: ['matricula esap', 'matricula', 'numero de matricula'], output: 'profile_field_matricula_esap' }
     };
 
@@ -300,10 +300,6 @@ class CsvFileProcessor {
         return matches;
     }
 
-    generatePassword() {
-        return Math.floor(1000 + Math.random() * 9000).toString();
-    }
-
     transformData(selectedFields) {
         if (!this.processedData || this.processedData.length < 2) {
             throw new Error('Nenhum dado processado disponível');
@@ -351,16 +347,30 @@ class CsvFileProcessor {
             });
         }
 
-        const outputHeaders = ['firstname', 'lastname', 'username', 'email', 'Password'];
-        
-        const activeFields = ['nome_completo', 'turma', 'matricula_esap', ...selectedFields.filter(f => !['nome_completo', 'turma', 'matricula_esap'].includes(f))];
-        
-        activeFields.forEach(fieldKey => {
-            if (fieldKey !== 'nome_completo' && fieldKey !== 'email') {
-                const mapping = CsvFileProcessor.FIELD_MAPPINGS[fieldKey];
-                if (mapping && mapping.output) {
-                    outputHeaders.push(mapping.output);
-                }
+        const outputHeaders = ['firstname', 'lastname', 'username', 'cohort1', 'email'];
+        const optionalOutputOrder = [
+            'cpf',
+            'sexo',
+            'nomepai',
+            'nomemae',
+            'dtnasc',
+            'celular',
+            'docidentif',
+            'orgexpident',
+            'dataexpedicao',
+            'endereco',
+            'bairro',
+            'cidade',
+            'uf',
+            'cep',
+        ];
+
+        const selectedSet = new Set(selectedFields || []);
+        const optionalFieldsToInclude = optionalOutputOrder.filter(fieldKey => selectedSet.has(fieldKey));
+        optionalFieldsToInclude.forEach(fieldKey => {
+            const mapping = CsvFileProcessor.FIELD_MAPPINGS[fieldKey];
+            if (mapping && mapping.output) {
+                outputHeaders.push(mapping.output);
             }
         });
 
@@ -392,15 +402,14 @@ class CsvFileProcessor {
             const emailIndex = columnIndices['email'];
             const email = emailIndex !== undefined && row[emailIndex] ? String(row[emailIndex]).trim() : '';
 
-            const password = this.generatePassword();
+            const turmaIndex = columnIndices['turma'];
+            const turma = turmaIndex !== undefined && row[turmaIndex] ? String(row[turmaIndex]).trim() : '';
 
-            const transformedRow = [firstname, lastname, username, email, password];
+            const transformedRow = [firstname, lastname, username, turma, email];
 
-            activeFields.forEach(fieldKey => {
-                if (fieldKey !== 'nome_completo' && fieldKey !== 'email') {
-                    const idx = columnIndices[fieldKey];
-                    transformedRow.push(idx !== undefined ? (row[idx] || '') : '');
-                }
+            optionalFieldsToInclude.forEach(fieldKey => {
+                const idx = columnIndices[fieldKey];
+                transformedRow.push(idx !== undefined ? (row[idx] || '') : '');
             });
 
             transformedArray.push(transformedRow);
