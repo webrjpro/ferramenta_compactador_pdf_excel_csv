@@ -3,51 +3,90 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Compressao de PDF - 60MB</title>
+    <meta name="description" content="Compressor de PDF online — reduza arquivos PDF mantendo a qualidade. Puro HTML, CSS e JS, sem upload para servidores." />
+    <title>Compressor de PDF — Premium</title>
     <link rel="stylesheet" href="./stylesred.css" />
   </head>
   <body>
+    <!-- Particle canvas background -->
+    <canvas id="particles-canvas"></canvas>
+
     <main class="wrap">
       <section class="card">
-        <h1>Compressor de PDF</h1>
-        <p class="subtitle">
-          Puro HTML, CSS e JS. Se enviar 1 PDF, baixa 1 PDF. Se enviar varios, baixa 1 ZIP.
-        </p>
+
+        <!-- Header -->
+        <div class="card-header">
+          <div class="card-icon">📄</div>
+          <div>
+            <h1>Compressor de PDF</h1>
+            <p class="subtitle">
+              Reduza seus PDFs direto no navegador — sem upload para servidores.<br/>
+              1 arquivo → baixa PDF &nbsp;·&nbsp; Vários → baixa ZIP
+            </p>
+          </div>
+        </div>
 
         <form id="compress-form">
-          <label for="pdf-input">Arquivos PDF</label>
-          <input
-            id="pdf-input"
-            type="file"
-            accept=".pdf,application/pdf"
-            multiple
-            required
-          />
+          <!-- Drop zone -->
+          <div class="drop-zone" id="drop-zone">
+            <input
+              id="pdf-input"
+              type="file"
+              accept=".pdf,application/pdf"
+              multiple
+              required
+            />
+            <span class="drop-zone-icon">⬆️</span>
+            <p class="drop-zone-text">
+              Arraste PDFs aqui ou <strong>clique para selecionar</strong>
+            </p>
+            <p class="drop-zone-hint">Aceita múltiplos arquivos .pdf</p>
+          </div>
+          <div class="file-badges" id="file-badges"></div>
 
-          <label for="max-mb">Limite maximo por arquivo (MB, ate 15)</label>
-          <input id="max-mb" type="number" min="1" max="15" step="1" value="15" />
+          <div class="divider"></div>
 
-          <label for="quality-profile">Perfil de qualidade</label>
-          <select id="quality-profile">
-            <option value="quality" selected>Melhor qualidade</option>
-            <option value="balanced">Balanceado</option>
-            <option value="compact">Maior compressao</option>
-          </select>
+          <!-- Settings row -->
+          <div class="form-row">
+            <div class="field-group">
+              <label for="max-mb">Limite por arquivo (MB)</label>
+              <input id="max-mb" type="number" min="1" max="15" step="1" value="15"
+                inputmode="numeric" pattern="[0-9]*"
+                onpaste="event.preventDefault()"
+                oninput="this.value=this.value.replace(/[^0-9]/g,''); if(+this.value>15)this.value=15; if(+this.value<1&&this.value!=='')this.value=1;" />
+            </div>
+            <div class="field-group">
+              <label for="quality-profile">Perfil de qualidade</label>
+              <select id="quality-profile">
+                <option value="quality" selected>🏆 Melhor qualidade</option>
+                <option value="balanced">⚖️ Balanceado</option>
+                <option value="compact">📦 Maior compressão</option>
+              </select>
+            </div>
+          </div>
 
-          <button id="run-btn" type="submit">Comprimir agora</button>
+          <button id="run-btn" type="submit">
+            🚀 Comprimir agora
+          </button>
         </form>
+
+        <!-- Progress -->
+        <div class="progress-wrap hidden" id="progress-wrap">
+          <div class="progress-bar" id="progress-bar"></div>
+        </div>
 
         <p id="status" class="status"></p>
         <p id="substatus" class="substatus"></p>
 
+        <!-- Report table -->
         <table id="report" class="report hidden">
           <thead>
             <tr>
               <th>Arquivo</th>
-              <th>Original (MB)</th>
-              <th>Final (MB)</th>
-              <th>Limite atingido?</th>
-              <th>Metodo</th>
+              <th>Original</th>
+              <th>Final</th>
+              <th>Atingiu?</th>
+              <th>Método</th>
             </tr>
           </thead>
           <tbody id="report-body"></tbody>
@@ -59,5 +98,96 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
     <script src="./red.js"></script>
+
+    <!-- Particle background script -->
+    <script>
+    (function() {
+      const canvas = document.getElementById('particles-canvas');
+      if (!canvas) return;
+      const ctx = canvas.getContext('2d');
+      let particles = [];
+      const PARTICLE_COUNT = 60;
+
+      function resize() {
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+      }
+
+      function createParticle() {
+        return {
+          x: Math.random() * canvas.width,
+          y: Math.random() * canvas.height,
+          vx: (Math.random() - 0.5) * 0.3,
+          vy: (Math.random() - 0.5) * 0.3,
+          r: Math.random() * 1.5 + 0.5,
+          alpha: Math.random() * 0.4 + 0.1,
+          color: ['99,102,241', '168,85,247', '236,72,153', '34,211,238'][Math.floor(Math.random() * 4)]
+        };
+      }
+
+      function init() {
+        resize();
+        particles = Array.from({ length: PARTICLE_COUNT }, createParticle);
+        window.addEventListener('resize', resize);
+        animate();
+      }
+
+      function animate() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        
+        particles.forEach(p => {
+          p.x += p.vx;
+          p.y += p.vy;
+
+          if (p.x < 0) p.x = canvas.width;
+          if (p.x > canvas.width) p.x = 0;
+          if (p.y < 0) p.y = canvas.height;
+          if (p.y > canvas.height) p.y = 0;
+
+          ctx.beginPath();
+          ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+          ctx.fillStyle = `rgba(${p.color}, ${p.alpha})`;
+          ctx.fill();
+
+          // Glow
+          ctx.beginPath();
+          ctx.arc(p.x, p.y, p.r * 3, 0, Math.PI * 2);
+          ctx.fillStyle = `rgba(${p.color}, ${p.alpha * 0.15})`;
+          ctx.fill();
+        });
+
+        // Draw connections
+        for (let i = 0; i < particles.length; i++) {
+          for (let j = i + 1; j < particles.length; j++) {
+            const dx = particles[i].x - particles[j].x;
+            const dy = particles[i].y - particles[j].y;
+            const dist = Math.sqrt(dx * dx + dy * dy);
+            if (dist < 120) {
+              ctx.beginPath();
+              ctx.moveTo(particles[i].x, particles[i].y);
+              ctx.lineTo(particles[j].x, particles[j].y);
+              ctx.strokeStyle = `rgba(99, 102, 241, ${0.06 * (1 - dist / 120)})`;
+              ctx.lineWidth = 0.5;
+              ctx.stroke();
+            }
+          }
+        }
+
+        requestAnimationFrame(animate);
+      }
+
+      init();
+    })();
+    </script>
+
+    <style>
+      #particles-canvas {
+        position: fixed;
+        inset: 0;
+        z-index: 0;
+        pointer-events: none;
+        opacity: 0.8;
+      }
+    </style>
   </body>
 </html>

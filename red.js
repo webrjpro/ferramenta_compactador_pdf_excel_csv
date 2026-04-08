@@ -41,6 +41,54 @@
   const report = document.getElementById("report");
   const reportBody = document.getElementById("report-body");
 
+  /* ── UI: drop-zone drag-and-drop feedback ──────────── */
+  const dropZone = document.getElementById("drop-zone");
+  const fileBadges = document.getElementById("file-badges");
+  const progressWrap = document.getElementById("progress-wrap");
+  const progressBar = document.getElementById("progress-bar");
+
+  if (dropZone) {
+    ["dragenter", "dragover"].forEach((evt) =>
+      dropZone.addEventListener(evt, (e) => {
+        e.preventDefault();
+        dropZone.classList.add("drag-over");
+      })
+    );
+    ["dragleave", "drop"].forEach((evt) =>
+      dropZone.addEventListener(evt, () =>
+        dropZone.classList.remove("drag-over")
+      )
+    );
+    dropZone.addEventListener("drop", (e) => {
+      e.preventDefault();
+      if (e.dataTransfer.files.length) {
+        pdfInput.files = e.dataTransfer.files;
+        pdfInput.dispatchEvent(new Event("change"));
+      }
+    });
+  }
+
+  pdfInput.addEventListener("change", () => {
+    if (!fileBadges) return;
+    fileBadges.innerHTML = "";
+    Array.from(pdfInput.files || []).forEach((f) => {
+      const span = document.createElement("span");
+      span.className = "file-badge";
+      span.innerHTML = `<span class="badge-icon">📄</span> ${f.name}`;
+      fileBadges.appendChild(span);
+    });
+  });
+
+  function setProgress(pct) {
+    if (!progressWrap || !progressBar) return;
+    progressWrap.classList.remove("hidden");
+    progressBar.style.width = Math.min(100, Math.max(0, pct)) + "%";
+  }
+  function hideProgress() {
+    if (progressWrap) progressWrap.classList.add("hidden");
+    if (progressBar) progressBar.style.width = "0%";
+  }
+
   if (!window.pdfjsLib || !window.jspdf || !window.JSZip) {
     status.textContent = "Falha ao carregar bibliotecas (PDF.js / jsPDF / JSZip).";
     return;
@@ -280,6 +328,7 @@
     report.classList.add("hidden");
     status.textContent = "";
     substatus.textContent = "";
+    hideProgress();
 
     const files = Array.from(pdfInput.files || []).filter((f) =>
       /\.pdf$/i.test(f.name)
@@ -297,11 +346,13 @@
 
     setBusy(true);
     status.textContent = "Comprimindo arquivos...";
+    setProgress(0);
 
     try {
       for (let i = 0; i < files.length; i += 1) {
         const file = files[i];
         substatus.textContent = `Arquivo ${i + 1}/${files.length}: ${file.name}`;
+        setProgress((i / files.length) * 100);
 
         const run = await compressPdfToLimit(file, maxBytes, profile, (msg) => {
           substatus.textContent = `Arquivo ${i + 1}/${files.length}: ${file.name} | ${msg}`;
@@ -320,15 +371,17 @@
         });
       }
 
+      setProgress(100);
       const deliveredName = await makeFinalDownload(results);
       renderReport(results);
-      status.textContent = `Concluido. Download iniciado: ${deliveredName}`;
+      status.textContent = `✅ Concluído! Download: ${deliveredName}`;
       substatus.textContent = "";
     } catch (err) {
-      status.textContent = "Erro ao processar os PDFs.";
+      status.textContent = "❌ Erro ao processar os PDFs.";
       substatus.textContent = err && err.message ? err.message : "Falha inesperada.";
     } finally {
       setBusy(false);
+      setTimeout(hideProgress, 2000);
     }
   });
 })();
